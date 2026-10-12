@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     python3.12 \
     python3.12-venv \
+    python3.12-dev \
     git \
     wget \
     ca-certificates \
@@ -51,6 +52,10 @@ RUN wget -qO- https://astral.sh/uv/install.sh | sh \
     && uv venv --python /usr/bin/python3.12 /opt/venv
 
 ENV PATH="/opt/venv/bin:${PATH}"
+
+# Triton compiles against Python.h on the worker; fail the build if gcc cannot find it.
+RUN echo '#include <Python.h>' | gcc -fsyntax-only -x c \
+    -I"$(python -c 'import sysconfig; print(sysconfig.get_paths()["include"])')" -
 
 # Install pinned ComfyUI release.
 RUN git clone --depth 1 --branch "${COMFYUI_VERSION}" \
